@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuantTrader v3 — Live Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg0:#07080a;--bg1:#0e1015;--bg2:#161921;--bg3:#1d2029;--bg-h:#252833;
+      --bdr:#2a2d38;--bdr2:#353847;
+      --t1:#e8eaed;--t2:#8b8f9a;--t3:#555862;
+      --g:#00d084;--gd:rgba(0,208,132,.12);
+      --r:#ff4757;--rd:rgba(255,71,87,.12);
+      --b:#5b7fff;--bd:rgba(91,127,255,.12);
+      --a:#ffb340;--ad:rgba(255,179,64,.12);
+      --p:#a78bfa;--pd:rgba(167,139,250,.12);
+    }
+    body{font-family:'DM Sans',sans-serif;background:var(--bg0);color:var(--t1);min-height:100vh}
+    .m{font-family:'JetBrains Mono',monospace}
+
+    .header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--bg1);position:sticky;top:0;z-index:100}
+    .logo{display:flex;align-items:center;gap:8px}
+    .logo-i{width:28px;height:28px;background:linear-gradient(135deg,var(--g),var(--b));border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#000}
+    .logo-t{font-weight:700;font-size:15px;letter-spacing:-.5px}
+    .hdr-r{display:flex;align-items:center;gap:10px}
+    .badge{font-size:9px;padding:3px 8px;border-radius:16px;font-weight:600;letter-spacing:.3px}
+    .b-open{background:var(--gd);color:var(--g)}.b-closed{background:var(--rd);color:var(--r)}
+    .cnt{font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace}
+    .ref{font-size:9px;color:var(--t3);font-family:'JetBrains Mono',monospace}
+    .btn-s{background:0;color:var(--t2);border:1px solid var(--bdr);padding:4px 10px;border-radius:4px;font-size:10px;cursor:pointer;font-family:inherit;transition:all .15s}
+    .btn-s:hover{border-color:var(--r);color:var(--r)}
+
+    /* Header Portfolio Ticker */
+    .hdr-ticker{display:flex;align-items:center;gap:16px;padding:4px 16px;border-radius:8px;background:var(--bg2);border:1px solid var(--bdr)}
+    .htk-block{text-align:center;min-width:80px}
+    .htk-label{font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+    .htk-val{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:600;letter-spacing:-.5px}
+    .htk-sub{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500}
+    .htk-div{width:1px;height:28px;background:var(--bdr)}
+    .htk-arrow{font-size:14px;margin-right:2px}
+    .htk-pulse{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+    .wrap{max-width:1440px;margin:0 auto;padding:14px 18px}
+
+    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+    .st{background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;padding:12px 14px}
+    .st-l{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+    .st-v{font-size:18px;font-weight:600;letter-spacing:-.5px}
+    .st-s{font-size:9px;margin-top:2px;color:var(--t3)}
+
+    .chart-box{background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;padding:14px;margin-bottom:14px}
+    .ch-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .ch-t{font-size:12px;font-weight:600}
+    .ch-lg{display:flex;gap:12px;font-size:9px;color:var(--t2)}
+    .lg-d{width:7px;height:7px;border-radius:2px;display:inline-block;margin-right:3px;vertical-align:middle}
+
+    .main{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .pnl{background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;overflow:hidden}
+    .pnl-h{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--bdr)}
+    .pnl-t{font-size:11px;font-weight:600}
+    .pnl-b{max-height:560px;overflow-y:auto}
+    .pnl-b::-webkit-scrollbar{width:3px}.pnl-b::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:2px}
+
+    /* Sector Tabs */
+    .sec-wrap{display:flex;align-items:center;border-bottom:1px solid var(--bdr);background:var(--bg3)}
+    .sec-scroll{display:flex;gap:0;overflow-x:auto;flex:1}
+    .sec-scroll::-webkit-scrollbar{height:0}
+    .stab{padding:7px 12px;font-size:10px;font-weight:500;color:var(--t3);cursor:pointer;border:none;background:0;white-space:nowrap;font-family:inherit;border-bottom:2px solid transparent;transition:all .12s}
+    .stab:hover{color:var(--t2)}.stab.active{color:var(--g);border-bottom-color:var(--g)}
+
+    .search-r{padding:6px 14px;border-bottom:1px solid rgba(255,255,255,.03);display:flex;gap:6px}
+    .sinp{flex:1;background:var(--bg1);border:1px solid var(--bdr);border-radius:4px;padding:6px 8px;color:var(--t1);font-size:11px;font-family:'JetBrains Mono',monospace}
+    .sinp:focus{outline:none;border-color:var(--b)}.sinp::placeholder{color:var(--t3)}
+    .sort-sel{background:var(--bg1);border:1px solid var(--bdr);border-radius:4px;padding:6px 8px;color:var(--t1);font-size:10px;font-family:'JetBrains Mono',monospace;cursor:pointer}
+    .sort-sel:focus{outline:none;border-color:var(--b)}
+
+    .sort-b{display:flex;padding:3px 14px;font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid rgba(255,255,255,.03)}
+    .sort-b span{cursor:pointer;padding:3px 0}.sort-b span:hover{color:var(--t2)}
+    .ct{min-width:54px}.cn{flex:1}.cp{min-width:68px;text-align:right}.cc{min-width:68px;text-align:right}.cv{min-width:56px;text-align:right}.ca{min-width:230px;text-align:right}
+
+    .sr{display:flex;align-items:center;padding:6px 14px;border-bottom:1px solid rgba(255,255,255,.02);transition:background .1s}
+    .sr:hover{background:var(--bg-h)}
+    .s-tk{font-weight:600;font-size:11px;min-width:54px}
+    .s-sc{font-size:8px;color:var(--t3);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:54px}
+    .s-nm{font-size:10px;color:var(--t2);flex:1;margin:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .s-pr{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;min-width:68px;text-align:right}
+    .s-ch{font-family:'JetBrains Mono',monospace;font-size:9px;min-width:68px;text-align:right;padding:2px 5px;border-radius:3px;font-weight:500}
+    .s-vl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t3);min-width:56px;text-align:right}
+    .s-ac{display:flex;gap:2px;margin-left:6px;min-width:230px;justify-content:flex-end;align-items:center;flex-wrap:nowrap}
+    .bt{font-family:'JetBrains Mono',monospace;font-size:9px;padding:3px 7px;border-radius:3px;border:1px solid var(--bdr);background:0;color:var(--t2);cursor:pointer;transition:all .12s}
+    .bt:hover{border-color:var(--g);color:var(--g);background:var(--gd)}
+    .bt.sl:hover{border-color:var(--r);color:var(--r);background:var(--rd)}
+    .bi{font-family:'JetBrains Mono',monospace;font-size:9px;width:42px;padding:3px 3px;border-radius:3px;border:1px solid var(--bdr);background:var(--bg0);color:var(--t1);text-align:center}
+    .bi:focus{outline:none;border-color:var(--g)}
+    .bg{font-family:'JetBrains Mono',monospace;font-size:9px;padding:3px 5px;border-radius:3px;border:1px solid var(--g);background:var(--gd);color:var(--g);cursor:pointer;font-weight:600}
+
+    .hr{display:flex;align-items:center;padding:7px 14px;border-bottom:1px solid rgba(255,255,255,.02)}.hr:hover{background:var(--bg-h)}
+    .h-tk{font-weight:600;font-size:11px;min-width:54px}
+    .h-dt{flex:1;margin:0 8px}.h-sh{font-size:10px;color:var(--t2);font-family:'JetBrains Mono',monospace}.h-av{font-size:8px;color:var(--t3)}
+    .h-vl{text-align:right;min-width:76px}.h-mk{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500}.h-pn{font-family:'JetBrains Mono',monospace;font-size:9px}
+
+    .tabs{display:flex;gap:0}
+    .tab{padding:6px 12px;font-size:10px;font-weight:500;background:0;border:1px solid var(--bdr);color:var(--t2);cursor:pointer;font-family:inherit;transition:all .12s}
+    .tab:first-child{border-radius:4px 0 0 4px}.tab:last-child{border-radius:0 4px 4px 0}.tab:not(:last-child){border-right:none}
+    .tab.active{background:var(--bd);color:var(--b);border-color:var(--b)}
+
+    .tr{display:flex;align-items:center;padding:5px 14px;border-bottom:1px solid rgba(255,255,255,.02);font-size:10px}
+    .t-a{font-weight:600;font-size:9px;min-width:30px;font-family:'JetBrains Mono',monospace}
+    .t-i{flex:1;color:var(--t2);font-family:'JetBrains Mono',monospace;font-size:9px;margin:0 8px}
+    .t-t{font-size:8px;color:var(--t3)}
+
+    .emp{padding:32px 16px;text-align:center;color:var(--t3);font-size:11px}
+
+    .toast{position:fixed;bottom:16px;right:16px;padding:8px 16px;border-radius:6px;font-size:11px;font-weight:500;transform:translateY(100px);opacity:0;transition:all .3s cubic-bezier(.16,1,.3,1);z-index:200}
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast.ok{background:var(--gd);color:var(--g);border:1px solid rgba(0,208,132,.3)}
+    .toast.er{background:var(--rd);color:var(--r);border:1px solid rgba(255,71,87,.3)}
+
+    .load-bar{height:2px;background:var(--bg3);overflow:hidden;position:relative}
+    .load-bar::after{content:'';position:absolute;left:0;top:0;height:100%;width:30%;background:var(--g);animation:slide 1.2s infinite}
+    @keyframes slide{0%{left:-30%}100%{left:100%}}
+
+    @media(max-width:900px){.stats{grid-template-columns:repeat(3,1fr)}.main{grid-template-columns:1fr}.s-nm,.s-vl,.cn,.cv{display:none}}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="logo"><div class="logo-i">QT</div><span class="logo-t">QuantTrader</span></div>
+    <span id="mkt-badge" class="badge b-closed">LOADING</span>
+    <span class="cnt" id="stk-cnt">—</span>
+  </div>
+
+  <div class="hdr-ticker" id="hdr-ticker">
+    <div class="htk-block">
+      <div class="htk-label">Portfolio</div>
+      <div class="htk-val" id="ht-val">$100,000.00</div>
+    </div>
+    <div class="htk-div"></div>
+    <div class="htk-block">
+      <div class="htk-label">P&L</div>
+      <div class="htk-sub" id="ht-pnl" style="color:var(--t2)">$0.00</div>
+    </div>
+    <div class="htk-div"></div>
+    <div class="htk-block">
+      <div class="htk-label">Return</div>
+      <div class="htk-sub" id="ht-ret" style="color:var(--t2)">0.00%</div>
+    </div>
+    <div class="htk-div"></div>
+    <div class="htk-block">
+      <div class="htk-label">Cash</div>
+      <div class="htk-sub" id="ht-cash" style="color:var(--t2)">$100,000.00</div>
+    </div>
+  </div>
+
+  <div class="hdr-r">
+    <a href="/quant.html" style="font-size:11px;padding:5px 12px;border:1px solid var(--p,#a78bfa);border-radius:5px;color:var(--p,#a78bfa);text-decoration:none;font-weight:600;background:rgba(167,139,250,.1)">Quant models</a>
+    <span class="ref" id="ref-t">—</span>
+    <button class="btn-s" onclick="resetPortfolio()">Reset portfolio</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="stats">
+    <div class="st"><div class="st-l">Portfolio</div><div class="st-v" id="s-tot">$100.00</div><div class="st-s" id="s-tot-s">—</div></div>
+    <div class="st"><div class="st-l">Cash</div><div class="st-v" id="s-cash">$100.00</div><div class="st-s" id="s-cash-s">—</div></div>
+    <div class="st"><div class="st-l">Holdings</div><div class="st-v" id="s-hld">$0.00</div><div class="st-s" id="s-pos">0 positions</div></div>
+    <div class="st"><div class="st-l">Total P&L</div><div class="st-v" id="s-pnl">$0.00</div><div class="st-s" id="s-pnl-p">—</div></div>
+    <div class="st"><div class="st-l">Started</div><div class="st-v" id="s-dt" style="font-size:14px">—</div><div class="st-s" id="s-el">—</div></div>
+  </div>
+
+  <div class="chart-box">
+    <div class="ch-hd">
+      <span class="ch-t">Portfolio value</span>
+      <div class="ch-lg"><span><span class="lg-d" style="background:var(--g)"></span>Portfolio</span><span><span class="lg-d" style="background:var(--bdr)"></span>$100</span></div>
+    </div>
+    <div style="position:relative;height:160px"><canvas id="mainChart"></canvas></div>
+  </div>
+
+  <div class="main">
+    <div class="pnl">
+      <div class="pnl-h">
+        <span class="pnl-t">Market</span>
+        <span class="cnt" id="flt-cnt">—</span>
+      </div>
+      <div class="sec-wrap">
+        <div class="sec-scroll" id="sec-bar"></div>
+      </div>
+      <div class="search-r">
+        <input class="sinp" id="search" placeholder="Search ticker or name..." oninput="renderMarket()" />
+        <select class="sort-sel" id="sort-sel" onchange="renderMarket()">
+          <option value="ticker-asc">Ticker A-Z</option>
+          <option value="ticker-desc">Ticker Z-A</option>
+          <option value="changePercent-desc">% Gainers</option>
+          <option value="changePercent-asc">% Losers</option>
+          <option value="price-desc">Price High</option>
+          <option value="price-asc">Price Low</option>
+          <option value="volume-desc">Volume High</option>
+          <option value="marketCap-desc">Market Cap</option>
+        </select>
+        <select class="sort-sel" id="default-shares" title="Default number of shares for quick-buy" onchange="renderMarket()">
+          <option value="1">1 share</option>
+          <option value="2">2 shares</option>
+          <option value="5">5 shares</option>
+          <option value="10">10 shares</option>
+          <option value="25">25 shares</option>
+          <option value="50">50 shares</option>
+          <option value="100">100 shares</option>
+        </select>
+      </div>
+      <div id="load-ind" class="load-bar" style="display:none"></div>
+      <div style="padding:6px 14px;border-bottom:1px solid rgba(255,255,255,.03);display:flex;gap:6px;align-items:center;background:var(--bg3)">
+        <span style="font-size:9px;color:var(--t3);white-space:nowrap">BUY ANY STOCK:</span>
+        <input class="sinp" id="custom-ticker" placeholder="STOCK HERE" style="width:90px;text-transform:uppercase" />
+        <input class="sinp" id="custom-amount" placeholder="$ amount" style="width:80px" onkeydown="if(event.key==='Enter')buyCustomTicker()" />
+        <button class="bt" style="border-color:var(--g);color:var(--g);background:var(--gd);padding:5px 12px;font-weight:600" onclick="buyCustomTicker()">BUY $</button>
+        <span style="color:var(--t3);font-size:8px">|</span>
+        <input class="sinp" id="custom-shares" placeholder="# shares" style="width:70px" onkeydown="if(event.key==='Enter')buyCustomTickerShares()" />
+        <button class="bt" style="border-color:var(--b);color:var(--b);background:var(--bd);padding:5px 12px;font-weight:600" onclick="buyCustomTickerShares()">BUY SH</button>
+      </div>
+      <div class="sort-b">
+        <span class="ct">Ticker</span><span class="cn">Name</span><span class="cp">Price</span><span class="cc">Change</span><span class="cv">Vol</span><span class="ca">Trade</span>
+      </div>
+      <div class="pnl-b" id="mkt-pnl"></div>
+    </div>
+
+    <div class="pnl">
+      <div class="pnl-h">
+        <div class="tabs">
+          <button class="tab active" data-tab="holdings" onclick="swTab('holdings')">Holdings</button>
+          <button class="tab" data-tab="log" onclick="swTab('log')">Trade log</button>
+        </div>
+      </div>
+      <div class="pnl-b" id="hld-pnl"></div>
+      <div class="pnl-b" id="log-pnl" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let marketData = [], portfolioData = null, sectors = [], sectorCounts = {};
+let chartHistory = [], mainChart = null;
+let activeSector = 'All', renderLimit = 80;
+
+async function api(u, o = {}) { return (await fetch(u, { headers: { 'Content-Type': 'application/json' }, ...o })).json(); }
+
+function toast(msg, ok = true) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + (ok ? 'ok' : 'er');
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Trade ────────────────────────────────────────────
+async function buy(tk, amt) {
+  const r = await api('/api/buy', { method: 'POST', body: JSON.stringify({ ticker: tk, amount: amt }) });
+  toast(r.success ? r.message : r.error, r.success);
+  await refreshAll();
+}
+async function buyC(tk) {
+  const inp = document.getElementById('i-' + tk);
+  const v = parseFloat(inp.value);
+  if (!v || v <= 0) return toast('Enter valid $', false);
+  await buy(tk, v); inp.value = '';
+}
+async function buyShares(tk, qty) {
+  const stock = marketData.find(s => s.ticker === tk);
+  if (!stock || !stock.price) return toast('No price for ' + tk, false);
+  const amount = qty * stock.price;
+  if (amount <= 0) return toast('Invalid quantity', false);
+  await buy(tk, amount);
+}
+async function buySh(tk) {
+  const inp = document.getElementById('sh-' + tk);
+  const qty = parseFloat(inp.value || document.getElementById('default-shares').value);
+  if (!qty || qty <= 0) return toast('Enter valid shares', false);
+  await buyShares(tk, qty);
+  inp.value = '';
+}
+async function sell(tk, fr) {
+  const r = await api('/api/sell', { method: 'POST', body: JSON.stringify({ ticker: tk, fraction: fr }) });
+  toast(r.success ? r.message : r.error, r.success);
+  await refreshAll();
+}
+async function buyCustomTicker() {
+  const ticker = document.getElementById('custom-ticker').value.toUpperCase().trim();
+  const amount = parseFloat(document.getElementById('custom-amount').value);
+  if (!ticker) return toast('Enter a ticker', false);
+  if (!amount || amount <= 0) return toast('Enter a valid $ amount', false);
+  await buy(ticker, amount);
+  document.getElementById('custom-ticker').value = '';
+  document.getElementById('custom-amount').value = '';
+}
+async function buyCustomTickerShares() {
+  const ticker = document.getElementById('custom-ticker').value.toUpperCase().trim();
+  const shares = parseFloat(document.getElementById('custom-shares').value);
+  if (!ticker) return toast('Enter a ticker', false);
+  if (!shares || shares <= 0) return toast('Enter valid shares', false);
+  try {
+    const q = await api('/api/quote/' + ticker);
+    if (!q.success || !q.price) return toast('Could not find price for ' + ticker, false);
+    const amount = shares * q.price;
+    toast(`${shares} shares × $${q.price.toFixed(2)} = $${amount.toFixed(2)}`, true);
+    await buy(ticker, amount);
+  } catch(e) {
+    toast('Error: ' + e.message, false);
+  }
+  document.getElementById('custom-ticker').value = '';
+  document.getElementById('custom-shares').value = '';
+}
+async function resetPortfolio() {
+  if (!confirm('Reset to $10,000?')) return;
+  const r = await api('/api/reset', { method: 'POST' });
+  if (r.success) { chartHistory = []; toast('Reset!'); await refreshAll(); }
+}
+
+// ── Format ───────────────────────────────────────────
+const fm = n => n == null ? '$0.00' : (n < 0 ? '-$' : '$') + Math.abs(n).toFixed(2);
+const fmBig = n => { if (n == null) return '$0.00'; const s = Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); return (n<0?'-$':'$')+s; };
+const fp = n => n == null ? '0.00%' : (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+function fv(n) { if (!n) return '—'; if (n >= 1e12) return (n/1e12).toFixed(1)+'T'; if (n >= 1e9) return (n/1e9).toFixed(1)+'B'; if (n >= 1e6) return (n/1e6).toFixed(1)+'M'; if (n >= 1e3) return (n/1e3).toFixed(0)+'K'; return n+''; }
+
+// ── Stats ────────────────────────────────────────────
+function renderStats() {
+  if (!portfolioData) return;
+  const d = portfolioData, pc = d.totalPnl >= 0 ? 'var(--g)' : 'var(--r)';
+  const arrow = d.totalPnl > 0 ? '▲' : d.totalPnl < 0 ? '▼' : '—';
+
+  // ── Header Ticker ──
+  const htVal = document.getElementById('ht-val');
+  htVal.textContent = fmBig(d.totalValue);
+  htVal.style.color = d.totalPnl >= 0 ? 'var(--g)' : 'var(--r)';
+  const htPnl = document.getElementById('ht-pnl');
+  htPnl.innerHTML = `<span class="htk-arrow">${arrow}</span>${d.totalPnl >= 0 ? '+' : ''}${fmBig(d.totalPnl)}`;
+  htPnl.style.color = pc;
+  const htRet = document.getElementById('ht-ret');
+  htRet.textContent = fp(d.totalReturn);
+  htRet.style.color = pc;
+  const htCash = document.getElementById('ht-cash');
+  htCash.textContent = fmBig(d.cash);
+  htCash.style.color = 'var(--t1)';
+  // Pulse border color based on P&L
+  document.getElementById('hdr-ticker').style.borderColor = d.totalPnl > 0 ? 'rgba(0,208,132,.35)' : d.totalPnl < 0 ? 'rgba(255,71,87,.35)' : 'var(--bdr)';
+
+  // ── Stats Cards ──
+  document.getElementById('s-tot').textContent = fmBig(d.totalValue);
+  document.getElementById('s-tot-s').innerHTML = `<span style="color:${pc}">${fp(d.totalReturn)}</span> all time`;
+  document.getElementById('s-cash').textContent = fmBig(d.cash);
+  document.getElementById('s-cash-s').textContent = (d.totalValue > 0 ? ((d.cash/d.totalValue)*100).toFixed(0) : '100') + '% of portfolio';
+  document.getElementById('s-hld').textContent = fmBig(d.holdingsValue);
+  const pc2 = Object.keys(d.holdings).length;
+  document.getElementById('s-pos').textContent = pc2 + ' position' + (pc2 !== 1 ? 's' : '');
+  document.getElementById('s-pnl').textContent = (d.totalPnl >= 0 ? '+' : '') + fmBig(d.totalPnl);
+  document.getElementById('s-pnl').style.color = pc;
+  document.getElementById('s-pnl-p').innerHTML = `<span style="color:${pc}">${fp(d.totalReturn)}</span>`;
+  if (d.createdAt) {
+    const c = new Date(d.createdAt);
+    document.getElementById('s-dt').textContent = c.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const days = Math.floor((Date.now() - c.getTime()) / 864e5);
+    document.getElementById('s-el').textContent = days + ' day' + (days !== 1 ? 's' : '') + ' ago';
+  }
+}
+
+// ── Sectors ──────────────────────────────────────────
+function renderSectors() {
+  const bar = document.getElementById('sec-bar');
+  const total = sectors.reduce((a, s) => a + (sectorCounts[s] || 0), 0);
+  let h = `<button class="stab ${activeSector === 'All' ? 'active' : ''}" onclick="setSec('All')">All (${total})</button>`;
+  for (const s of sectors) {
+    h += `<button class="stab ${activeSector === s ? 'active' : ''}" onclick="setSec('${s}')">${s} (${sectorCounts[s] || 0})</button>`;
+  }
+  bar.innerHTML = h;
+}
+function setSec(s) { activeSector = s; renderSectors(); renderMarket(); }
+
+// ── Market ───────────────────────────────────────────
+function getFilteredSorted() {
+  const q = (document.getElementById('search').value || '').toLowerCase();
+  const [sortKey, sortDir] = (document.getElementById('sort-sel').value || 'ticker-asc').split('-');
+  const dir = sortDir === 'desc' ? -1 : 1;
+
+  let list = [...marketData];
+  if (activeSector !== 'All') list = list.filter(s => s.sector === activeSector);
+  if (q) list = list.filter(s => s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q));
+
+  list.sort((a, b) => {
+    if (sortKey === 'ticker' || sortKey === 'name') {
+      return dir * (a[sortKey] || '').localeCompare(b[sortKey] || '');
+    }
+    return dir * ((a[sortKey] || 0) - (b[sortKey] || 0));
+  });
+  return list;
+}
+
+function renderMarket() {
+  const panel = document.getElementById('mkt-pnl');
+  const list = getFilteredSorted();
+  document.getElementById('flt-cnt').textContent = list.length + ' stocks';
+
+  // Market badge
+  if (list.length) {
+    const isOpen = list[0]?.marketState === 'REGULAR';
+    const badge = document.getElementById('mkt-badge');
+    badge.textContent = isOpen ? 'MARKET OPEN' : 'MARKET CLOSED';
+    badge.className = 'badge ' + (isOpen ? 'b-open' : 'b-closed');
+  }
+
+  if (!list.length) { panel.innerHTML = '<div class="emp">No stocks found</div>'; return; }
+
+  // Render up to renderLimit, with a "show more" button
+  const shown = list.slice(0, renderLimit);
+  let h = '';
+  shown.forEach(s => {
+    const cc = s.changePercent >= 0 ? 'var(--g)' : 'var(--r)';
+    const cb = s.changePercent >= 0 ? 'var(--gd)' : 'var(--rd)';
+    h += `<div class="sr">
+      <div class="s-tk">${s.ticker}<span class="s-sc">${s.sector}</span></div>
+      <span class="s-nm">${s.name}</span>
+      <span class="s-pr">$${s.price.toFixed(2)}</span>
+      <span class="s-ch" style="color:${cc};background:${cb}">${s.changePercent >= 0 ? '+' : ''}${s.changePercent.toFixed(2)}%</span>
+      <span class="s-vl">${fv(s.volume)}</span>
+      <div class="s-ac">
+        <button class="bt" onclick="buy('${s.ticker}',5)">$5</button>
+        <button class="bt" onclick="buy('${s.ticker}',10)">$10</button>
+        <button class="bt" onclick="buy('${s.ticker}',25)">$25</button>
+        <input class="bi" id="i-${s.ticker}" placeholder="$" onkeydown="if(event.key==='Enter')buyC('${s.ticker}')" />
+        <button class="bg" onclick="buyC('${s.ticker}')">GO</button>
+        <span style="color:var(--t3);font-size:8px;margin:0 2px">|</span>
+        <input class="bi" id="sh-${s.ticker}" placeholder="${document.getElementById('default-shares').value}" style="width:36px" onkeydown="if(event.key==='Enter')buySh('${s.ticker}')" />
+        <button class="bt" style="border-color:var(--b);color:var(--b);background:var(--bd)" onclick="buySh('${s.ticker}')">BUY</button>
+        <button class="bt" style="border-color:var(--p);color:var(--p);font-size:8px" onclick="buyShares('${s.ticker}',parseInt(document.getElementById('default-shares').value))">${document.getElementById('default-shares').value}sh</button>
+      </div>
+    </div>`;
+  });
+
+  if (list.length > renderLimit) {
+    h += `<div style="padding:10px 14px;text-align:center">
+      <button class="bt" style="padding:6px 20px;font-size:11px" onclick="renderLimit+=${80};renderMarket()">
+        Show more (${list.length - renderLimit} remaining)
+      </button>
+    </div>`;
+  }
+  panel.innerHTML = h;
+}
+
+// ── Holdings ─────────────────────────────────────────
+function renderHoldings() {
+  const panel = document.getElementById('hld-pnl');
+  if (!portfolioData || !Object.keys(portfolioData.holdings).length) {
+    panel.innerHTML = '<div class="emp">No positions yet — buy stocks from the market panel.</div>'; return;
+  }
+  let h = '';
+  const sorted = Object.entries(portfolioData.holdings).sort((a, b) => b[1].marketValue - a[1].marketValue);
+  for (const [tk, d] of sorted) {
+    const pc = d.unrealizedPnl >= 0 ? 'var(--g)' : 'var(--r)';
+    h += `<div class="hr">
+      <div class="h-tk">${tk}<span class="s-sc">${d.sector || ''}</span></div>
+      <div class="h-dt">
+        <div class="h-sh">${d.shares.toFixed(4)} shares</div>
+        <div class="h-av">avg $${d.avgCost.toFixed(2)} → $${d.currentPrice.toFixed(2)}</div>
+      </div>
+      <div class="h-vl">
+        <div class="h-mk">${fm(d.marketValue)}</div>
+        <div class="h-pn" style="color:${pc}">${d.unrealizedPnl >= 0 ? '+' : ''}${fm(d.unrealizedPnl)} (${fp(d.unrealizedPct)})</div>
+      </div>
+      <div class="s-ac" style="min-width:auto;margin-left:8px">
+        <button class="bt sl" onclick="sell('${tk}',0.25)">25%</button>
+        <button class="bt sl" onclick="sell('${tk}',0.5)">50%</button>
+        <button class="bt sl" onclick="sell('${tk}',1)">All</button>
+      </div>
+    </div>`;
+  }
+  panel.innerHTML = h;
+}
+
+// ── Trade Log ────────────────────────────────────────
+function renderLog() {
+  const panel = document.getElementById('log-pnl');
+  if (!portfolioData || !portfolioData.tradeLog.length) { panel.innerHTML = '<div class="emp">No trades yet.</div>'; return; }
+  let h = '';
+  [...portfolioData.tradeLog].reverse().forEach(t => {
+    const c = t.action === 'BUY' ? 'var(--g)' : 'var(--r)';
+    const tm = new Date(t.time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    h += `<div class="tr"><span class="t-a" style="color:${c}">${t.action}</span><span class="t-i">${t.ticker} ${t.shares.toFixed(4)} @ $${t.price.toFixed(2)} = $${t.amount.toFixed(2)}</span><span class="t-t">${tm}</span></div>`;
+  });
+  panel.innerHTML = h;
+}
+
+function swTab(t) {
+  document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
+  document.querySelector(`.tab[data-tab="${t}"]`).classList.add('active');
+  document.getElementById('hld-pnl').style.display = t === 'holdings' ? 'block' : 'none';
+  document.getElementById('log-pnl').style.display = t === 'log' ? 'block' : 'none';
+}
+
+// ── Chart ────────────────────────────────────────────
+function initChart() {
+  mainChart = new Chart(document.getElementById('mainChart'), {
+    type: 'line',
+    data: { labels: [], datasets: [
+      { label: 'Portfolio', data: [], borderColor: '#00d084', backgroundColor: 'rgba(0,208,132,.06)', fill: true, tension: .3, pointRadius: 1.5, borderWidth: 2 },
+      { label: 'Baseline', data: [], borderColor: '#2a2d38', borderDash: [4, 4], pointRadius: 0, borderWidth: 1, fill: false }
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#555862', font: { size: 9, family: 'JetBrains Mono' }, maxTicksLimit: 8 }, grid: { display: false }, border: { color: '#2a2d38' } },
+        y: { ticks: { color: '#555862', font: { size: 9, family: 'JetBrains Mono' }, callback: v => '$' + v.toFixed(0) }, grid: { color: 'rgba(255,255,255,.03)' }, border: { display: false } }
+      },
+      interaction: { intersect: false, mode: 'index' }
+    }
+  });
+}
+function updateChart() {
+  if (!portfolioData) return;
+  const startVal = portfolioData.totalValue - portfolioData.totalPnl; // derive start value
+  chartHistory.push({ time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }), value: portfolioData.totalValue });
+  if (chartHistory.length > 150) chartHistory = chartHistory.slice(-150);
+  mainChart.data.labels = chartHistory.map(p => p.time);
+  mainChart.data.datasets[0].data = chartHistory.map(p => Math.round(p.value * 100) / 100);
+  mainChart.data.datasets[1].data = chartHistory.map(() => startVal);
+  const up = portfolioData.totalPnl >= 0;
+  mainChart.data.datasets[0].borderColor = up ? '#00d084' : '#ff4757';
+  mainChart.data.datasets[0].backgroundColor = up ? 'rgba(0,208,132,.06)' : 'rgba(255,71,87,.06)';
+  mainChart.update('none');
+}
+
+// ── Refresh ──────────────────────────────────────────
+let countdown = 60;
+let isLoading = false;
+
+async function refreshAll() {
+  isLoading = true;
+  document.getElementById('load-ind').style.display = 'block';
+  try {
+    const [secRes, priceRes, portRes] = await Promise.all([
+      api('/api/sectors'), api('/api/prices'), api('/api/portfolio'),
+    ]);
+    if (secRes.success) { sectors = secRes.sectors; sectorCounts = secRes.sectorCounts; }
+    if (priceRes.success) {
+      marketData = priceRes.prices;
+      document.getElementById('stk-cnt').textContent = (priceRes.totalCached || marketData.length) + ' stocks live';
+    }
+    if (portRes.success) portfolioData = portRes;
+    renderStats(); renderSectors(); renderMarket(); renderHoldings(); renderLog(); updateChart();
+  } catch (e) { console.error('Refresh:', e); }
+  isLoading = false;
+  document.getElementById('load-ind').style.display = 'none';
+  countdown = 60;
+}
+
+function tick() {
+  countdown--;
+  document.getElementById('ref-t').textContent = isLoading ? 'fetching...' : ('refresh ' + countdown + 's');
+  if (countdown <= 0 && !isLoading) refreshAll();
+}
+
+// Load saved chart history then start
+async function init() {
+  initChart();
+  try {
+    const saved = await api('/api/chart-history');
+    if (saved.success && saved.history.length) {
+      chartHistory = saved.history.map(p => ({
+        time: new Date(p.t).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }),
+        value: p.v,
+      }));
+      // Render saved history onto chart immediately
+      mainChart.data.labels = chartHistory.map(p => p.time);
+      mainChart.data.datasets[0].data = chartHistory.map(p => p.value);
+      mainChart.data.datasets[1].data = chartHistory.map(() => 10000);
+      mainChart.update('none');
+      console.log('Loaded ' + chartHistory.length + ' saved chart points');
+    }
+  } catch (e) { console.log('No saved chart history'); }
+  await refreshAll();
+  setInterval(tick, 1000);
+}
+init();
+</script>
+</body>
+</html>

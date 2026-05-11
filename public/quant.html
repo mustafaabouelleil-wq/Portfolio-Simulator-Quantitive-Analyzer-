@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuantTrader — Models & Signals</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg0:#07080a;--bg1:#0e1015;--bg2:#161921;--bg3:#1d2029;--bg-h:#252833;
+      --bdr:#2a2d38;--t1:#e8eaed;--t2:#8b8f9a;--t3:#555862;
+      --g:#00d084;--gd:rgba(0,208,132,.12);
+      --r:#ff4757;--rd:rgba(255,71,87,.12);
+      --b:#5b7fff;--bd:rgba(91,127,255,.12);
+      --a:#ffb340;--ad:rgba(255,179,64,.12);
+      --p:#a78bfa;--pd:rgba(167,139,250,.12);
+    }
+    body{font-family:'DM Sans',sans-serif;background:var(--bg0);color:var(--t1);min-height:100vh}
+    .m{font-family:'JetBrains Mono',monospace}
+    a{color:var(--b);text-decoration:none}a:hover{text-decoration:underline}
+
+    .header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--bdr);background:var(--bg1);position:sticky;top:0;z-index:100}
+    .logo{display:flex;align-items:center;gap:8px}
+    .logo-i{width:28px;height:28px;background:linear-gradient(135deg,var(--p),var(--b));border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#000}
+    .logo-t{font-weight:700;font-size:15px;letter-spacing:-.5px}
+    .nav{display:flex;gap:4px}
+    .nav a{padding:6px 14px;border-radius:5px;font-size:11px;font-weight:500;color:var(--t2);transition:all .15s}
+    .nav a:hover{background:var(--bg3);text-decoration:none;color:var(--t1)}
+    .nav a.active{background:var(--pd);color:var(--p)}
+
+    .wrap{max-width:1440px;margin:0 auto;padding:16px 20px}
+
+    /* Controls */
+    .ctrl-row{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+    .ctrl-input{background:var(--bg2);border:1px solid var(--bdr);border-radius:5px;padding:7px 10px;color:var(--t1);font-size:12px;font-family:'JetBrains Mono',monospace}
+    .ctrl-input:focus{outline:none;border-color:var(--b)}
+    select.ctrl-input{cursor:pointer}
+    .btn{padding:7px 16px;border-radius:5px;border:1px solid var(--b);background:var(--bd);color:var(--b);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+    .btn:hover{background:var(--b);color:#fff}
+    .btn.green{border-color:var(--g);background:var(--gd);color:var(--g)}.btn.green:hover{background:var(--g);color:#000}
+    .btn.amber{border-color:var(--a);background:var(--ad);color:var(--a)}.btn.amber:hover{background:var(--a);color:#000}
+
+    /* Cards */
+    .card{background:var(--bg2);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;margin-bottom:14px}
+    .card-h{padding:12px 16px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center}
+    .card-t{font-size:12px;font-weight:600}
+    .card-b{padding:14px 16px}
+
+    /* Signal Badge */
+    .sig{display:inline-block;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace}
+    .sig-buy{background:var(--gd);color:var(--g)}.sig-sell{background:var(--rd);color:var(--r)}
+    .sig-hold{background:rgba(255,255,255,.06);color:var(--t2)}
+    .sig-strong-buy{background:rgba(0,208,132,.25);color:#00ffaa;border:1px solid rgba(0,208,132,.4)}
+    .sig-strong-sell{background:rgba(255,71,87,.25);color:#ff6b7a;border:1px solid rgba(255,71,87,.4)}
+
+    /* Strength bar */
+    .str-bar{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-top:4px}
+    .str-fill{height:100%;border-radius:2px;transition:width .5s}
+
+    /* Grid */
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+    /* Signal Row */
+    .sig-row{display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.02);transition:background .1s;cursor:pointer}
+    .sig-row:hover{background:var(--bg-h)}
+    .sig-tk{font-weight:600;font-size:13px;min-width:60px}
+    .sig-model{font-size:10px;color:var(--t3);min-width:90px}
+    .sig-reasons{flex:1;font-size:10px;color:var(--t2);margin:0 12px;line-height:1.5}
+    .sig-score{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;min-width:50px;text-align:right}
+
+    /* Indicator table */
+    .ind-tbl{width:100%;font-size:11px;border-collapse:collapse}
+    .ind-tbl td{padding:5px 8px;border-bottom:1px solid rgba(255,255,255,.03)}
+    .ind-tbl td:first-child{color:var(--t3);width:40%}
+    .ind-tbl td:last-child{font-family:'JetBrains Mono',monospace;text-align:right}
+
+    /* Reason list */
+    .reason{padding:4px 0;font-size:11px;color:var(--t2);display:flex;align-items:start;gap:6px;line-height:1.4}
+    .reason::before{content:'';display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--t3);margin-top:6px;flex-shrink:0}
+
+    /* Risk meter */
+    .risk-meter{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;position:relative}
+    .risk-fill{height:100%;border-radius:4px;transition:width .5s}
+
+    /* Backtest results */
+    .bt-stat{text-align:center;padding:12px;background:var(--bg3);border-radius:6px}
+    .bt-label{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+    .bt-val{font-size:16px;font-weight:600;font-family:'JetBrains Mono',monospace}
+
+    /* Loading */
+    .loading{padding:40px;text-align:center;color:var(--t3);font-size:12px}
+    .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--bdr);border-top-color:var(--b);border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Pair card */
+    .pair-card{background:var(--bg3);border-radius:6px;padding:12px;margin-bottom:8px}
+    .pair-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .pair-tickers{font-weight:600;font-size:13px}
+
+    @media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:center;gap:14px">
+    <div class="logo"><div class="logo-i">QE</div><span class="logo-t">Quant Engine</span></div>
+  </div>
+  <div class="nav">
+    <a href="/">Portfolio</a>
+    <a href="/quant.html" class="active">Models</a>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ═══ SCREENER CONTROLS ═══ -->
+  <div class="ctrl-row">
+    <input class="ctrl-input" id="scan-tickers" value="AAPL,MSFT,NVDA,GOOGL,META,AMZN,TSLA,AMD,PLTR,IONQ,COIN,SNOW,NET,SPY,QQQ" style="flex:1;min-width:300px" placeholder="Tickers (comma-separated)" />
+    <select class="ctrl-input" id="scan-period">
+      <option value="3mo">3 months</option>
+      <option value="6mo" selected>6 months</option>
+      <option value="1y">1 year</option>
+      <option value="2y">2 years</option>
+    </select>
+    <button class="btn green" onclick="runScan()">Run scan</button>
+    <button class="btn amber" onclick="runScreener('momentum')">Top momentum</button>
+    <button class="btn amber" onclick="runScreener('oversold')">Oversold picks</button>
+    <button class="btn" onclick="scanPairs()">Pairs scan</button>
+  </div>
+
+  <!-- ═══ SIGNAL SCANNER RESULTS ═══ -->
+  <div class="card" id="scan-card">
+    <div class="card-h">
+      <span class="card-t">Composite signals — all models combined</span>
+      <span class="m" style="font-size:10px;color:var(--t3)" id="scan-count">—</span>
+    </div>
+    <div id="scan-results">
+      <div class="loading"><span class="spin"></span>Enter tickers and click "Run scan"</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+
+    <!-- ═══ DEEP ANALYSIS ═══ -->
+    <div class="card">
+      <div class="card-h">
+        <span class="card-t">Deep analysis</span>
+        <div style="display:flex;gap:4px">
+          <input class="ctrl-input" id="analyze-ticker" value="NVDA" style="width:80px;text-align:center" />
+          <button class="btn" onclick="runAnalysis()">Analyze</button>
+        </div>
+      </div>
+      <div id="analysis-results">
+        <div class="loading">Click "Analyze" to run all models on a stock</div>
+      </div>
+    </div>
+
+    <!-- ═══ RISK ANALYSIS ═══ -->
+    <div class="card">
+      <div class="card-h">
+        <span class="card-t">Portfolio risk analysis</span>
+        <button class="btn" onclick="runRisk()">Analyze risk</button>
+      </div>
+      <div id="risk-results">
+        <div class="loading">Click to analyze your current portfolio risk</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAIRS TRADING ═══ -->
+  <div class="card" id="pairs-card" style="display:none">
+    <div class="card-h">
+      <span class="card-t">Statistical arbitrage — pairs trading</span>
+      <span class="m" style="font-size:10px;color:var(--t3)" id="pairs-count">—</span>
+    </div>
+    <div id="pairs-results"></div>
+  </div>
+
+  <!-- ═══ BACKTESTING ═══ -->
+  <div class="card">
+    <div class="card-h">
+      <span class="card-t">Backtesting</span>
+      <div style="display:flex;gap:4px">
+        <input class="ctrl-input" id="bt-ticker" value="AAPL" style="width:80px;text-align:center" />
+        <select class="ctrl-input" id="bt-period">
+          <option value="6mo">6 months</option>
+          <option value="1y" selected>1 year</option>
+          <option value="2y">2 years</option>
+        </select>
+        <button class="btn green" onclick="runBacktest()">Backtest</button>
+      </div>
+    </div>
+    <div id="bt-results">
+      <div class="loading">Select a stock and click "Backtest" to test strategies on historical data</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+async function api(u) { return (await fetch(u)).json(); }
+
+function sigClass(signal) {
+  const s = (signal || '').toUpperCase();
+  if (s.includes('STRONG_BUY') || s === 'BULLISH') return 'sig-strong-buy';
+  if (s.includes('STRONG_SELL') || s === 'BEARISH') return 'sig-strong-sell';
+  if (s === 'BUY' || s === 'TRADE') return 'sig-buy';
+  if (s === 'SELL') return 'sig-sell';
+  return 'sig-hold';
+}
+
+function scoreColor(score) {
+  if (score > 15) return 'var(--g)';
+  if (score < -15) return 'var(--r)';
+  return 'var(--t2)';
+}
+
+function strengthBar(strength, color) {
+  const c = color || (strength > 0.5 ? 'var(--g)' : strength > 0.3 ? 'var(--a)' : 'var(--t3)');
+  return `<div class="str-bar"><div class="str-fill" style="width:${(strength*100).toFixed(0)}%;background:${c}"></div></div>`;
+}
+
+// ── SCANNER ─────────────────────────────────────────
+async function runScan() {
+  const el = document.getElementById('scan-results');
+  el.innerHTML = '<div class="loading"><span class="spin"></span>Scanning... fetching historical data for each ticker</div>';
+
+  const tickers = document.getElementById('scan-tickers').value;
+  const period = document.getElementById('scan-period').value;
+  const data = await api(`/api/quant/scan?tickers=${encodeURIComponent(tickers)}&period=${period}`);
+
+  if (!data.success) { el.innerHTML = `<div class="loading">Error: ${data.error}</div>`; return; }
+  document.getElementById('scan-count').textContent = data.count + ' stocks analyzed';
+
+  if (!data.results.length) { el.innerHTML = '<div class="loading">No results</div>'; return; }
+
+  let h = '';
+  data.results.forEach(r => {
+    const col = scoreColor(r.score);
+    const topReasons = [];
+    if (r.models.meanReversion?.reasons) topReasons.push(...r.models.meanReversion.reasons.slice(0, 1));
+    if (r.models.momentum?.reasons) topReasons.push(...r.models.momentum.reasons.slice(0, 1));
+    if (r.models.ml?.reasons) topReasons.push(...r.models.ml.reasons.slice(0, 1));
+
+    h += `<div class="sig-row" onclick="document.getElementById('analyze-ticker').value='${r.ticker}';runAnalysis()">
+      <span class="sig-tk">${r.ticker}</span>
+      <span class="sig ${sigClass(r.signal)}">${r.signal.replace('_',' ')}</span>
+      <div class="sig-reasons">${topReasons.join(' · ')}</div>
+      <span class="sig-score" style="color:${col}">${r.score > 0 ? '+' : ''}${r.score}</span>
+      <div style="min-width:60px;margin-left:8px">${strengthBar(r.strength, col)}</div>
+    </div>`;
+  });
+  el.innerHTML = h;
+}
+
+// ── SCREENER ────────────────────────────────────────
+async function runScreener(type) {
+  const el = document.getElementById('scan-results');
+  el.innerHTML = `<div class="loading"><span class="spin"></span>Running ${type} screener on 50 stocks...</div>`;
+  document.getElementById('scan-count').textContent = 'screener: ' + type;
+
+  const data = await api(`/api/quant/screener?type=${type}&limit=20`);
+  if (!data.success) { el.innerHTML = `<div class="loading">Error: ${data.error}</div>`; return; }
+  document.getElementById('scan-count').textContent = `${data.results.length} results (screened ${data.screened})`;
+
+  let h = '';
+  data.results.forEach(r => {
+    const col = scoreColor(r.score);
+    h += `<div class="sig-row" onclick="document.getElementById('analyze-ticker').value='${r.ticker}';runAnalysis()">
+      <span class="sig-tk">${r.ticker}</span>
+      <span class="sig-model">${r.model || 'Composite'}</span>
+      <span class="sig ${sigClass(r.signal)}">${(r.signal || r.classification || '').replace('_',' ')}</span>
+      <div class="sig-reasons">${(r.reasons || []).slice(0, 2).join(' · ')}</div>
+      <span class="sig-score" style="color:${col}">${r.score > 0 ? '+' : ''}${r.score}</span>
+      <div style="min-width:60px;margin-left:8px">${strengthBar(r.strength || 0, col)}</div>
+    </div>`;
+  });
+  el.innerHTML = h || '<div class="loading">No signals found</div>';
+}
+
+// ── DEEP ANALYSIS ───────────────────────────────────
+async function runAnalysis() {
+  const el = document.getElementById('analysis-results');
+  const ticker = document.getElementById('analyze-ticker').value.toUpperCase();
+  el.innerHTML = `<div class="loading"><span class="spin"></span>Running all models on ${ticker}...</div>`;
+
+  const data = await api(`/api/quant/analyze/${ticker}?period=${document.getElementById('scan-period').value}`);
+  if (!data.success) { el.innerHTML = `<div class="loading">Error: ${data.error}</div>`; return; }
+
+  const c = data.composite;
+  let h = `<div class="card-b">`;
+
+  // Composite header
+  h += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div><span style="font-size:20px;font-weight:700">${ticker}</span>
+    <span class="sig ${sigClass(c.signal)}" style="margin-left:8px;font-size:12px">${c.signal.replace('_',' ')}</span></div>
+    <div style="text-align:right">
+      <div style="font-size:10px;color:var(--t3)">Composite score</div>
+      <div style="font-size:22px;font-weight:600;color:${scoreColor(c.score)};font-family:'JetBrains Mono',monospace">${c.score > 0 ? '+' : ''}${c.score}</div>
+      ${strengthBar(c.strength, scoreColor(c.score))}
+    </div>
+  </div>`;
+
+  h += `<div style="font-size:10px;margin-bottom:16px;padding:6px 10px;background:var(--bg3);border-radius:4px;color:var(--t2)">
+    Model agreement: <strong style="color:var(--t1)">${(c.agreement||'').replace('_',' ')}</strong>
+  </div>`;
+
+  // Each model
+  const models = [
+    { key: 'meanReversion', data: data.models.meanReversion, label: 'Mean Reversion', desc: 'Identifies overbought/oversold conditions using z-scores, Bollinger Bands, and RSI' },
+    { key: 'momentum', data: data.models.momentum, label: 'Momentum', desc: 'Follows trends using SMA crossovers, MACD, rate of change, and volume' },
+    { key: 'ml', data: data.models.ml, label: 'ML Pattern Recognition', desc: 'Composite feature analysis with trend consistency, regression prediction, and pattern detection' },
+    { key: 'volatility', data: data.models.volatility, label: 'Volatility Analysis', desc: 'Measures risk regime using historical vol, ATR, Bollinger bandwidth' },
+  ];
+
+  for (const m of models) {
+    if (!m.data) continue;
+    const col = scoreColor(m.data.score);
+    h += `<div style="margin-bottom:14px;padding:12px;background:var(--bg3);border-radius:6px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div><span style="font-weight:600;font-size:12px">${m.label}</span>
+        <span class="sig ${sigClass(m.data.signal || m.data.classification)}" style="margin-left:6px">${(m.data.signal || m.data.classification || '').replace('_',' ')}</span></div>
+        <span class="m" style="font-size:12px;color:${col};font-weight:600">${m.data.score > 0 ? '+' : ''}${m.data.score}</span>
+      </div>
+      <div style="font-size:9px;color:var(--t3);margin-bottom:8px">${m.desc}</div>`;
+
+    // Reasons
+    if (m.data.reasons) {
+      for (const reason of m.data.reasons) {
+        h += `<div class="reason">${reason}</div>`;
+      }
+    }
+
+    // Key indicators
+    if (m.data.indicators) {
+      h += `<table class="ind-tbl" style="margin-top:8px">`;
+      for (const [k, v] of Object.entries(m.data.indicators)) {
+        if (v === null || v === undefined || typeof v === 'object') continue;
+        const label = k.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+        let display = typeof v === 'number' ? (k.includes('rice') ? '$' + v.toFixed(2) : v.toString()) : v;
+        h += `<tr><td>${label}</td><td>${display}</td></tr>`;
+      }
+      h += `</table>`;
+    }
+    h += `</div>`;
+  }
+
+  h += `</div>`;
+  el.innerHTML = h;
+}
+
+// ── PAIRS SCAN ──────────────────────────────────────
+async function scanPairs() {
+  const card = document.getElementById('pairs-card');
+  card.style.display = 'block';
+  const el = document.getElementById('pairs-results');
+  el.innerHTML = '<div class="loading"><span class="spin"></span>Scanning 16 correlated pairs...</div>';
+
+  const data = await api(`/api/quant/pairs/scan?period=${document.getElementById('scan-period').value}`);
+  if (!data.success) { el.innerHTML = `<div class="loading">Error: ${data.error}</div>`; return; }
+  document.getElementById('pairs-count').textContent = data.count + ' pairs analyzed';
+
+  let h = '<div style="padding:14px 16px">';
+  data.results.forEach(r => {
+    const col = r.signal === 'TRADE' ? 'var(--g)' : r.signal === 'NO_PAIR' ? 'var(--r)' : 'var(--t2)';
+    const borderCol = r.signal === 'TRADE' ? 'rgba(0,208,132,.3)' : 'var(--bdr)';
+    h += `<div class="pair-card" style="border:1px solid ${borderCol}">
+      <div class="pair-header">
+        <span class="pair-tickers">${r.pair}</span>
+        <span class="sig ${sigClass(r.signal)}">${r.signal}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px">
+        <div style="text-align:center"><div style="font-size:9px;color:var(--t3)">Correlation</div><div class="m" style="font-size:12px;font-weight:500">${r.indicators?.correlation || '—'}</div></div>
+        <div style="text-align:center"><div style="font-size:9px;color:var(--t3)">Z-Score</div><div class="m" style="font-size:12px;font-weight:500;color:${Math.abs(r.indicators?.ratioZScore || 0) > 1.5 ? 'var(--a)' : 'var(--t1)'}">${r.indicators?.ratioZScore || '—'}</div></div>
+        <div style="text-align:center"><div style="font-size:9px;color:var(--t3)">R²</div><div class="m" style="font-size:12px;font-weight:500">${r.indicators?.r2 || '—'}</div></div>
+        <div style="text-align:center"><div style="font-size:9px;color:var(--t3)">Score</div><div class="m" style="font-size:12px;font-weight:500;color:${col}">${r.score}</div></div>
+      </div>`;
+    if (r.reasons) {
+      for (const reason of r.reasons) {
+        h += `<div class="reason">${reason}</div>`;
+      }
+    }
+    if (r.tradeAction) {
+      h += `<div style="margin-top:6px;padding:6px 10px;background:var(--gd);border-radius:4px;font-size:11px;color:var(--g)">
+        Trade: Long <strong>${r.tradeAction.long}</strong> / Short <strong>${r.tradeAction.short}</strong>
+      </div>`;
+    }
+    h += `</div>`;
+  });
+  h += '</div>';
+  el.innerHTML = h;
+}
+
+// ── RISK ────────────────────────────────────────────
+async function runRisk() {
+  const el = document.getElementById('risk-results');
+  el.innerHTML = '<div class="loading"><span class="spin"></span>Analyzing portfolio risk...</div>';
+
+  const data = await api('/api/quant/risk');
+  if (!data.success) { el.innerHTML = `<div class="loading">Error: ${data.error}</div>`; return; }
+
+  const riskColors = { HIGH: 'var(--r)', MEDIUM: 'var(--a)', LOW: 'var(--g)', MINIMAL: 'var(--g)', NONE: 'var(--t3)' };
+  const rc = riskColors[data.riskLevel] || 'var(--t2)';
+
+  let h = `<div class="card-b">`;
+  h += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div><span style="font-size:14px;font-weight:600">Risk Level: </span><span style="color:${rc};font-weight:700;font-size:14px">${data.riskLevel}</span></div>
+    <span class="m" style="font-size:12px;color:${rc}">${data.riskScore}/100</span>
+  </div>`;
+
+  h += `<div class="risk-meter" style="margin-bottom:14px"><div class="risk-fill" style="width:${data.riskScore}%;background:${rc}"></div></div>`;
+
+  // Metrics
+  if (data.metrics) {
+    h += `<div class="grid-3" style="margin-bottom:12px">
+      <div class="bt-stat"><div class="bt-label">Cash %</div><div class="bt-val">${data.metrics.cashPct}%</div></div>
+      <div class="bt-stat"><div class="bt-label">Positions</div><div class="bt-val">${data.metrics.numPositions}</div></div>
+      <div class="bt-stat"><div class="bt-label">Max weight</div><div class="bt-val">${data.metrics.maxPositionWeight}%</div></div>
+    </div>`;
+
+    if (data.metrics.sectorWeights && Object.keys(data.metrics.sectorWeights).length) {
+      h += `<div style="font-size:10px;color:var(--t3);margin-bottom:6px">SECTOR EXPOSURE</div>`;
+      for (const [sec, w] of Object.entries(data.metrics.sectorWeights).sort((a,b) => b[1] - a[1])) {
+        const barW = Math.min(w, 100);
+        h += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="font-size:10px;min-width:100px;color:var(--t2)">${sec}</span>
+          <div style="flex:1;height:6px;background:var(--bg3);border-radius:3px"><div style="height:100%;width:${barW}%;background:var(--b);border-radius:3px"></div></div>
+          <span class="m" style="font-size:10px;min-width:36px;text-align:right">${w}%</span>
+        </div>`;
+      }
+    }
+  }
+
+  // Warnings
+  if (data.warnings?.length) {
+    h += `<div style="margin-top:12px">`;
+    for (const w of data.warnings) {
+      const wc = w.startsWith('HIGH') ? 'var(--r)' : w.startsWith('MEDIUM') || w.startsWith('LOW CASH') ? 'var(--a)' : 'var(--t2)';
+      h += `<div class="reason" style="color:${wc}">${w}</div>`;
+    }
+    h += `</div>`;
+  }
+
+  h += `</div>`;
+  el.innerHTML = h;
+}
+
+// ── BACKTEST ────────────────────────────────────────
+async function runBacktest() {
+  const el = document.getElementById('bt-results');
+  const ticker = document.getElementById('bt-ticker').value.toUpperCase();
+  const period = document.getElementById('bt-period').value;
+  el.innerHTML = `<div class="loading"><span class="spin"></span>Backtesting 3 strategies on ${ticker} (${period})...</div>`;
+
+  const data = await api(`/api/quant/backtest/${ticker}?period=${period}`);
+  if (!data.success) { el.innerHTML = `<div class="loading">Error: ${data.error}</div>`; return; }
+
+  let h = '<div class="card-b">';
+  h += `<div style="font-size:16px;font-weight:700;margin-bottom:14px">${ticker} — Strategy comparison</div>`;
+
+  // Chart
+  h += `<div style="position:relative;height:200px;margin-bottom:16px"><canvas id="btChart"></canvas></div>`;
+
+  // Strategy comparison cards
+  const strats = [
+    { key: 'momentum', label: 'Momentum', color: '#00d084' },
+    { key: 'meanReversion', label: 'Mean Reversion', color: '#5b7fff' },
+    { key: 'combined', label: 'Combined', color: '#a78bfa' },
+  ];
+
+  h += '<div class="grid-3" style="margin-bottom:14px">';
+  for (const s of strats) {
+    const d = data.strategies[s.key];
+    if (!d) continue;
+    const retCol = d.totalReturn >= 0 ? 'var(--g)' : 'var(--r)';
+    const alphaCol = d.alpha >= 0 ? 'var(--g)' : 'var(--r)';
+    h += `<div style="background:var(--bg3);border-radius:6px;padding:14px;border-top:3px solid ${s.color}">
+      <div style="font-weight:600;font-size:12px;margin-bottom:10px">${s.label}</div>
+      <div class="grid-2" style="gap:8px">
+        <div><div style="font-size:9px;color:var(--t3)">Return</div><div class="m" style="font-size:14px;font-weight:600;color:${retCol}">${d.totalReturn >= 0 ? '+' : ''}${d.totalReturn}%</div></div>
+        <div><div style="font-size:9px;color:var(--t3)">Alpha</div><div class="m" style="font-size:14px;font-weight:600;color:${alphaCol}">${d.alpha >= 0 ? '+' : ''}${d.alpha}%</div></div>
+        <div><div style="font-size:9px;color:var(--t3)">Sharpe</div><div class="m" style="font-size:12px">${d.sharpe}</div></div>
+        <div><div style="font-size:9px;color:var(--t3)">Win rate</div><div class="m" style="font-size:12px">${d.winRate}%</div></div>
+        <div><div style="font-size:9px;color:var(--t3)">Max DD</div><div class="m" style="font-size:12px;color:var(--r)">-${d.maxDrawdown}%</div></div>
+        <div><div style="font-size:9px;color:var(--t3)">Trades</div><div class="m" style="font-size:12px">${d.numTrades}</div></div>
+      </div>
+    </div>`;
+  }
+  h += '</div>';
+
+  // Buy & hold comparison
+  const bh = data.strategies.combined?.buyHoldReturn || 0;
+  const bhCol = bh >= 0 ? 'var(--g)' : 'var(--r)';
+  h += `<div style="padding:8px 12px;background:var(--bg3);border-radius:4px;font-size:11px;color:var(--t2)">
+    Buy & hold return: <span class="m" style="color:${bhCol};font-weight:600">${bh >= 0 ? '+' : ''}${bh}%</span>
+    — The alpha shown above is excess return over buy & hold.
+  </div>`;
+
+  h += '</div>';
+  el.innerHTML = h;
+
+  // Draw chart
+  if (data.chartData?.length) {
+    setTimeout(() => {
+      const ctx = document.getElementById('btChart');
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.chartData.map((_, i) => i),
+          datasets: [{
+            label: 'Combined Strategy',
+            data: data.chartData.map(v => Math.round(v * 100) / 100),
+            borderColor: '#a78bfa',
+            backgroundColor: 'rgba(167,139,250,.06)',
+            fill: true, tension: .3, pointRadius: 0, borderWidth: 2,
+          }, {
+            label: 'Starting Capital',
+            data: data.chartData.map(() => 10000),
+            borderColor: '#2a2d38', borderDash: [4, 4], pointRadius: 0, borderWidth: 1, fill: false,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { display: false },
+            y: { ticks: { color: '#555862', font: { size: 9, family: 'JetBrains Mono' }, callback: v => '$' + (v/1000).toFixed(1) + 'k' }, grid: { color: 'rgba(255,255,255,.03)' }, border: { display: false } }
+          }
+        }
+      });
+    }, 100);
+  }
+}
+</script>
+</body>
+</html>

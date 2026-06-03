@@ -38,8 +38,8 @@ function loadChartHistory() {
 }
 
 function saveChartHistory(data) {
-  // Keep max 5000 data points (~3.5 days at 1min intervals, or months at 60s)
-  const trimmed = data.slice(-5000);
+  // Keep max 43200 data points (~30 days at 1min intervals)
+  const trimmed = data.slice(-43200);
   fs.writeFileSync(CHART_FILE, JSON.stringify(trimmed));
 }
 
@@ -569,7 +569,7 @@ app.post("/api/buy", async (req, res) => {
     if (!ticker || !amount || amount <= 0)
       return res.status(400).json({ success: false, error: "Invalid ticker or amount" });
     if (amount > portfolio.cash)
-      return res.status(400).json({ success: false, error: `Insufficient cash ($${portfolio.cash.toFixed(2)})` });
+      return res.status(400).json({ success: false, error: `Not enough cash — you have $${portfolio.cash.toFixed(2)} but this trade costs $${parseFloat(amount).toFixed(2)}` });
 
     // Try cached price first, then fetch directly from Yahoo for any ticker
     let prices = await fetchPrices();

@@ -467,30 +467,9 @@ async function runBacktest() {
 
   // Strategy comparison cards
   const strats = [
-    {
-      key: 'momentum',
-      label: 'Momentum',
-      color: '#00d084',
-      desc: 'Rides price trends. Buys when 20-day rate of change is positive and RSI is below 70 (not yet overbought). Sells when momentum reverses and RSI is above 30.',
-      entry: 'ROC > threshold + RSI < 70',
-      exit: 'ROC < -threshold + RSI > 30',
-    },
-    {
-      key: 'meanReversion',
-      label: 'Mean Reversion',
-      color: '#5b7fff',
-      desc: 'Bets that stretched prices snap back. Buys when the stock is more than 1.5 standard deviations below its 20-day average. Sells when it reverts above 1.5 standard deviations.',
-      entry: 'Z-score < -1.5 (oversold)',
-      exit: 'Z-score > +1.5 (overbought)',
-    },
-    {
-      key: 'combined',
-      label: 'Combined',
-      color: '#a78bfa',
-      desc: 'Requires at least 2 of 3 models to agree before trading. Scores momentum, mean reversion, and RSI independently — only enters when the majority signal aligns.',
-      entry: '2+ of: momentum up, z-score low, RSI < 35',
-      exit: '2+ of: momentum down, z-score high, RSI > 65',
-    },
+    { key: 'momentum', label: 'Momentum', color: '#00d084' },
+    { key: 'meanReversion', label: 'Mean Reversion', color: '#5b7fff' },
+    { key: 'combined', label: 'Combined', color: '#a78bfa' },
   ];
 
   h += '<div class="grid-3" style="margin-bottom:14px">';
@@ -500,12 +479,7 @@ async function runBacktest() {
     const retCol = d.totalReturn >= 0 ? 'var(--g)' : 'var(--r)';
     const alphaCol = d.alpha >= 0 ? 'var(--g)' : 'var(--r)';
     h += `<div style="background:var(--bg3);border-radius:6px;padding:14px;border-top:3px solid ${s.color}">
-      <div style="font-weight:600;font-size:12px;margin-bottom:4px">${s.label}</div>
-      <div style="font-size:9px;color:var(--t3);margin-bottom:8px;line-height:1.5">${s.desc}</div>
-      <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:10px;padding:7px 9px;background:var(--bg2);border-radius:4px">
-        <div style="font-size:9px;color:var(--t3)">ENTRY: <span style="color:var(--g);font-family:'JetBrains Mono',monospace">${s.entry}</span></div>
-        <div style="font-size:9px;color:var(--t3)">EXIT: <span style="color:var(--r);font-family:'JetBrains Mono',monospace">${s.exit}</span></div>
-      </div>
+      <div style="font-weight:600;font-size:12px;margin-bottom:10px">${s.label}</div>
       <div class="grid-2" style="gap:8px">
         <div><div style="font-size:9px;color:var(--t3)">Return</div><div class="m" style="font-size:14px;font-weight:600;color:${retCol}">${d.totalReturn >= 0 ? '+' : ''}${d.totalReturn}%</div></div>
         <div><div style="font-size:9px;color:var(--t3)">Alpha</div><div class="m" style="font-size:14px;font-weight:600;color:${alphaCol}">${d.alpha >= 0 ? '+' : ''}${d.alpha}%</div></div>
@@ -562,6 +536,19 @@ async function runBacktest() {
     }, 100);
   }
 }
+
+// Auto-fill scanner with portfolio tickers on load
+async function initPortfolioTickers() {
+  try {
+    const data = await fetch('/api/portfolio').then(r => r.json());
+    if (data.success && data.holdings && Object.keys(data.holdings).length > 0) {
+      const tickers = Object.keys(data.holdings).join(',');
+      const input = document.getElementById('scan-tickers');
+      if (input) input.value = tickers;
+    }
+  } catch(e) { /* keep default if fetch fails */ }
+}
+initPortfolioTickers();
 </script>
 </body>
 </html>

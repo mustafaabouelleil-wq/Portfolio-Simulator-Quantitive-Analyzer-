@@ -1,0 +1,233 @@
+{
+  "cash": 98.25399999999894,
+  "holdings": {
+    "TTMI": {
+      "shares": 5.625,
+      "avgCost": 137.5
+    },
+    "IONQ": {
+      "shares": 5,
+      "avgCost": 63.64
+    },
+    "QQQ": {
+      "shares": 3.2,
+      "avgCost": 717.54
+    },
+    "MRVL": {
+      "shares": 10,
+      "avgCost": 196.32999999999998
+    },
+    "CRWD": {
+      "shares": 5,
+      "avgCost": 663.46
+    },
+    "DDOG": {
+      "shares": 1,
+      "avgCost": 222.32
+    },
+    "AMD": {
+      "shares": 2,
+      "avgCost": 503.89
+    },
+    "SNOW": {
+      "shares": 1,
+      "avgCost": 255.55
+    }
+  },
+  "tradeLog": [
+    {
+      "time": "2026-04-29T09:30:00.000Z",
+      "action": "BUY",
+      "ticker": "TTMI",
+      "shares": 10,
+      "price": 137.5,
+      "amount": 1375
+    },
+    {
+      "time": "2026-05-23T21:16:53.453Z",
+      "action": "BUY",
+      "ticker": "IONQ",
+      "shares": 5,
+      "price": 63.64,
+      "amount": 318.2
+    },
+    {
+      "time": "2026-05-23T21:18:11.205Z",
+      "action": "BUY",
+      "ticker": "QQQ",
+      "shares": 5,
+      "price": 717.54,
+      "amount": 3587.7
+    },
+    {
+      "time": "2026-05-23T21:20:10.039Z",
+      "action": "BUY",
+      "ticker": "MRVL",
+      "shares": 5,
+      "price": 196.33,
+      "amount": 981.6500000000001
+    },
+    {
+      "time": "2026-05-23T21:22:07.992Z",
+      "action": "BUY",
+      "ticker": "CRWD",
+      "shares": 1,
+      "price": 663.46,
+      "amount": 663.46
+    },
+    {
+      "time": "2026-05-23T21:22:08.493Z",
+      "action": "BUY",
+      "ticker": "CRWD",
+      "shares": 1,
+      "price": 663.46,
+      "amount": 663.46
+    },
+    {
+      "time": "2026-05-23T21:22:09.006Z",
+      "action": "BUY",
+      "ticker": "CRWD",
+      "shares": 1,
+      "price": 663.46,
+      "amount": 663.46
+    },
+    {
+      "time": "2026-05-23T21:22:12.331Z",
+      "action": "BUY",
+      "ticker": "CRWD",
+      "shares": 1,
+      "price": 663.46,
+      "amount": 663.46
+    },
+    {
+      "time": "2026-05-23T21:22:14.290Z",
+      "action": "BUY",
+      "ticker": "CRWD",
+      "shares": 1,
+      "price": 663.46,
+      "amount": 663.46
+    },
+    {
+      "time": "2026-05-23T21:22:49.011Z",
+      "action": "BUY",
+      "ticker": "DDOG",
+      "shares": 1,
+      "price": 222.32,
+      "amount": 222.32
+    },
+    {
+      "time": "2026-05-23T21:24:47.947Z",
+      "action": "SELL",
+      "ticker": "TTMI",
+      "shares": 2.5,
+      "price": 189.92,
+      "amount": 474.79999999999995
+    },
+    {
+      "time": "2026-05-23T21:24:58.211Z",
+      "action": "SELL",
+      "ticker": "TTMI",
+      "shares": 1.875,
+      "price": 189.92,
+      "amount": 356.09999999999997
+    },
+    {
+      "time": "2026-05-23T21:25:09.490Z",
+      "action": "BUY",
+      "ticker": "MRVL",
+      "shares": 1,
+      "price": 196.33,
+      "amount": 196.33
+    },
+    {
+      "time": "2026-05-23T21:25:09.939Z",
+      "action": "BUY",
+      "ticker": "MRVL",
+      "shares": 1,
+      "price": 196.33,
+      "amount": 196.33
+    },
+    {
+      "time": "2026-05-23T21:25:10.451Z",
+      "action": "BUY",
+      "ticker": "MRVL",
+      "shares": 1,
+      "price": 196.33,
+      "amount": 196.33
+    },
+    {
+      "time": "2026-05-23T21:25:13.381Z",
+      "action": "BUY",
+      "ticker": "MRVL",
+      "shares": 1,
+      "price": 196.33,
+      "amount": 196.33
+    },
+    {
+      "time": "2026-05-23T21:25:13.980Z",
+      "action": "BUY",
+      "ticker": "MRVL",
+      "shares": 1,
+      "price": 196.33,
+      "amount": 196.33
+    },
+    {
+      "time": "2026-05-27T00:50:43.068Z",
+      "action": "SELL",
+      "ticker": "QQQ",
+      "shares": 1,
+      "price": 730.28,
+      "amount": 730.28
+    },
+    {
+      "time": "2026-05-27T00:50:43.592Z",
+      "action": "SELL",
+      "ticker": "QQQ",
+      "shares": 0.8,
+      "price": 730.28,
+      "amount": 584.224
+    },
+    {
+      "time": "2026-05-27T00:50:53.596Z",
+      "action": "BUY",
+      "ticker": "AMD",
+      "shares": 1,
+      "price": 503.89,
+      "amount": 503.89
+    },
+    {
+      "time": "2026-05-27T00:50:54.888Z",
+      "action": "BUY",
+      "ticker": "AMD",
+      "shares": 1,
+      "price": 503.89,
+      "amount": 503.89
+    },
+    {
+      "time": "2026-05-30T16:59:10.356Z",
+      "action": "BUY",
+      "ticker": "SNOW",
+      "shares": 1,
+      "price": 255.55,
+      "amount": 255.55
+    },
+    {
+      "time": "2026-05-30T16:59:15.286Z",
+      "action": "BUY",
+      "ticker": "SNOW",
+      "shares": 1,
+      "price": 255.55,
+      "amount": 255.55
+    },
+    {
+      "time": "2026-05-30T17:01:37.845Z",
+      "action": "SELL",
+      "ticker": "SNOW",
+      "shares": 1,
+      "price": 255.55,
+      "amount": 255.55
+    }
+  ],
+  "startValue": 10000,
+  "createdAt": "2026-04-29T09:30:00.000Z"
+}

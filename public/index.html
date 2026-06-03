@@ -178,7 +178,17 @@
   <div class="chart-box">
     <div class="ch-hd">
       <span class="ch-t">Portfolio value</span>
-      <div class="ch-lg"><span><span class="lg-d" style="background:var(--g)"></span>Portfolio</span><span><span class="lg-d" style="background:var(--bdr)"></span>$100</span></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div style="display:flex;gap:2px" id="range-btns">
+          <button class="bt" onclick="setChartRange('1d')" id="rb-1d">1D</button>
+          <button class="bt" onclick="setChartRange('1w')" id="rb-1w">1W</button>
+          <button class="bt" onclick="setChartRange('1mo')" id="rb-1mo" style="border-color:var(--g);color:var(--g);background:var(--gd)">1M</button>
+          <button class="bt" onclick="setChartRange('3mo')" id="rb-3mo">3M</button>
+          <button class="bt" onclick="setChartRange('6mo')" id="rb-6mo">6M</button>
+          <button class="bt" onclick="setChartRange('1y')" id="rb-1y">1Y</button>
+        </div>
+        <div class="ch-lg"><span><span class="lg-d" style="background:var(--g)"></span>Portfolio</span></div>
+      </div>
     </div>
     <div style="position:relative;height:160px"><canvas id="mainChart"></canvas></div>
   </div>
@@ -287,6 +297,14 @@ async function buySh(tk) {
 }
 async function sell(tk, fr) {
   const r = await api('/api/sell', { method: 'POST', body: JSON.stringify({ ticker: tk, fraction: fr }) });
+  toast(r.success ? r.message : r.error, r.success);
+  await refreshAll();
+}
+async function sellOne(tk) {
+  const holding = portfolioData?.holdings?.[tk];
+  if (!holding || holding.shares < 1) return toast('Need at least 1 share to sell', false);
+  const fraction = 1 / holding.shares;
+  const r = await api('/api/sell', { method: 'POST', body: JSON.stringify({ ticker: tk, fraction }) });
   toast(r.success ? r.message : r.error, r.success);
   await refreshAll();
 }
@@ -472,6 +490,7 @@ function renderHoldings() {
         <div class="h-pn" style="color:${pc}">${d.unrealizedPnl >= 0 ? '+' : ''}${fm(d.unrealizedPnl)} (${fp(d.unrealizedPct)})</div>
       </div>
       <div class="s-ac" style="min-width:auto;margin-left:8px">
+        <button class="bt sl" onclick="sellOne('${tk}')">-1sh</button>
         <button class="bt sl" onclick="sell('${tk}',0.25)">25%</button>
         <button class="bt sl" onclick="sell('${tk}',0.5)">50%</button>
         <button class="bt sl" onclick="sell('${tk}',1)">All</button>
@@ -503,34 +522,96 @@ function swTab(t) {
 
 // ── Chart ────────────────────────────────────────────
 function initChart() {
-  mainChart = new Chart(document.getElementById('mainChart'), {
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  const gradientGreen = ctx.createLinearGradient(0, 0, 0, 160);
+  gradientGreen.addColorStop(0, 'rgba(0,208,132,0.18)');
+  gradientGreen.addColorStop(1, 'rgba(0,208,132,0.00)');
+  const gradientRed = ctx.createLinearGradient(0, 0, 0, 160);
+  gradientRed.addColorStop(0, 'rgba(255,71,87,0.18)');
+  gradientRed.addColorStop(1, 'rgba(255,71,87,0.00)');
+
+  mainChart = new Chart(ctx, {
     type: 'line',
     data: { labels: [], datasets: [
-      { label: 'Portfolio', data: [], borderColor: '#00d084', backgroundColor: 'rgba(0,208,132,.06)', fill: true, tension: .3, pointRadius: 1.5, borderWidth: 2 },
-      { label: 'Baseline', data: [], borderColor: '#2a2d38', borderDash: [4, 4], pointRadius: 0, borderWidth: 1, fill: false }
+      {
+        label: 'Portfolio', data: [],
+        borderColor: '#00d084', backgroundColor: gradientGreen,
+        fill: true, tension: 0.45, pointRadius: 0, pointHoverRadius: 4,
+        pointHoverBackgroundColor: '#00d084', pointHoverBorderColor: '#fff',
+        pointHoverBorderWidth: 2, borderWidth: 2, cubicInterpolationMode: 'monotone'
+      },
+      {
+        label: 'Baseline', data: [],
+        borderColor: 'rgba(255,255,255,0.08)', borderDash: [4, 4],
+        pointRadius: 0, borderWidth: 1, fill: false, tension: 0
+      }
     ]},
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      animation: { duration: 400, easing: 'easeInOutQuart' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          mode: 'index', intersect: false,
+          backgroundColor: '#1d2029', borderColor: '#2a2d38', borderWidth: 1,
+          titleColor: '#8b8f9a', bodyColor: '#e8eaed',
+          titleFont: { size: 10, family: 'JetBrains Mono' },
+          bodyFont: { size: 12, family: 'JetBrains Mono', weight: '600' },
+          padding: 10, cornerRadius: 6,
+          callbacks: {
+            label: ctx => ' $' + ctx.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+            title: ctx => ctx[0]?.label || ''
+          },
+          filter: item => item.datasetIndex === 0
+        }
+      },
       scales: {
-        x: { ticks: { color: '#555862', font: { size: 9, family: 'JetBrains Mono' }, maxTicksLimit: 8 }, grid: { display: false }, border: { color: '#2a2d38' } },
-        y: { ticks: { color: '#555862', font: { size: 9, family: 'JetBrains Mono' }, callback: v => '$' + v.toFixed(0) }, grid: { color: 'rgba(255,255,255,.03)' }, border: { display: false } }
+        x: {
+          ticks: { color: '#555862', font: { size: 9, family: 'JetBrains Mono' }, maxTicksLimit: 6, maxRotation: 0 },
+          grid: { display: false }, border: { color: '#1d2029' }
+        },
+        y: {
+          ticks: { color: '#555862', font: { size: 9, family: 'JetBrains Mono' }, callback: v => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 0 }), maxTicksLimit: 5 },
+          grid: { color: 'rgba(255,255,255,0.025)', drawBorder: false },
+          border: { display: false }
+        }
       },
       interaction: { intersect: false, mode: 'index' }
     }
   });
+  mainChart._gradientGreen = gradientGreen;
+  mainChart._gradientRed = gradientRed;
 }
+let chartRange = '1mo';
+const RANGE_MS = { '1d': 864e5, '1w': 6048e5, '1mo': 2592e6, '3mo': 7776e6, '6mo': 15552e6, '1y': 31536e6 };
+
+function setChartRange(r) {
+  chartRange = r;
+  ['1d','1w','1mo','3mo','6mo','1y'].forEach(k => {
+    const b = document.getElementById('rb-' + k);
+    if (!b) return;
+    if (k === r) { b.style.borderColor='var(--g)'; b.style.color='var(--g)'; b.style.background='var(--gd)'; }
+    else { b.style.borderColor=''; b.style.color=''; b.style.background=''; }
+  });
+  updateChart();
+}
+
 function updateChart() {
   if (!portfolioData) return;
-  const startVal = portfolioData.totalValue - portfolioData.totalPnl; // derive start value
-  chartHistory.push({ time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }), value: portfolioData.totalValue });
-  if (chartHistory.length > 150) chartHistory = chartHistory.slice(-150);
-  mainChart.data.labels = chartHistory.map(p => p.time);
-  mainChart.data.datasets[0].data = chartHistory.map(p => Math.round(p.value * 100) / 100);
-  mainChart.data.datasets[1].data = chartHistory.map(() => startVal);
+  const cutoff = Date.now() - (RANGE_MS[chartRange] || RANGE_MS['1mo']);
+  const filtered = chartHistory.filter(p => new Date(p.rawTime || p.time).getTime() >= cutoff);
+  const display = filtered.length > 0 ? filtered : chartHistory.slice(-1);
+
+  const startVal = portfolioData.startValue || 10000;
+  const now = { time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }), rawTime: new Date().toISOString(), value: portfolioData.totalValue };
+  const points = [...display, now];
+
+  mainChart.data.labels = points.map(p => p.time);
+  mainChart.data.datasets[0].data = points.map(p => Math.round(p.value * 100) / 100);
+  mainChart.data.datasets[1].data = points.map(() => startVal);
   const up = portfolioData.totalPnl >= 0;
   mainChart.data.datasets[0].borderColor = up ? '#00d084' : '#ff4757';
-  mainChart.data.datasets[0].backgroundColor = up ? 'rgba(0,208,132,.06)' : 'rgba(255,71,87,.06)';
+  mainChart.data.datasets[0].backgroundColor = up ? mainChart._gradientGreen : mainChart._gradientRed;
   mainChart.update('none');
 }
 
@@ -572,6 +653,7 @@ async function init() {
     if (saved.success && saved.history.length) {
       chartHistory = saved.history.map(p => ({
         time: new Date(p.t).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }),
+        rawTime: p.t,
         value: p.v,
       }));
       // Render saved history onto chart immediately

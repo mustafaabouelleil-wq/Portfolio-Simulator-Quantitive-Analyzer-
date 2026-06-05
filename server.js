@@ -545,6 +545,8 @@ app.get("/api/portfolio", async (req, res) => {
         costBasis,
         unrealizedPnl: mktValue - costBasis,
         unrealizedPct: costBasis > 0 ? ((mktValue - costBasis) / costBasis) * 100 : 0,
+        dailyChange: (prices[ticker]?.change || 0) * h.shares,
+        dailyChangePct: prices[ticker]?.changePercent || 0,
       };
     }
 

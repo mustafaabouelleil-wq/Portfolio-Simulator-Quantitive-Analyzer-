@@ -8,7 +8,7 @@ A real-time quantitative trading dashboard that pulls **live stock prices** from
 # 1. Unzip and enter the folder
 cd quant-trader
 
-# 2. Install dependencies
+# 2. Install dependencies/packages 
 npm install
 
 # 3. Start the server
@@ -18,6 +18,8 @@ node server.js
 # http://localhost:3000
 ```
 
+**IMPORTANT: Make sure portfolio.json is EMPTY when using. You want to have your own portfolio, and some commits include some of my tests. 
+You can edit the money amount in index.html & server.js by doing ctrl + f and finding "10000" and editing each one.
 ## Features
 
 - **Live market data** — real-time prices from Yahoo Finance, refreshing every 30 seconds
@@ -29,8 +31,7 @@ node server.js
 
 ## Stocks Tracked
 
-AAPL, MSFT, NVDA, AMZN, GOOGL, META, TSLA, JPM, JNJ, SPY
-
+Any stock on yahoo finance website. 
 ## API Endpoints
 
 | Method | Endpoint | Description |
@@ -65,3 +66,5 @@ Volatility Analysis — Measures 20-day and 60-day historical vol, vol ratio for
 Backtester — Tests momentum, mean reversion, and combined strategies on historical data, showing total return, alpha vs buy-and-hold, Sharpe ratio, win rate, max drawdown, and number of trades — with a chart.
 
 Risk Analysis — Analyzes your live portfolio for position concentration, sector concentration, cash buffer, diversification, and per-holding volatility.
+
+Notice: This app was used with the help of claude code, email any questions to mustafa.abouelleil@gmail.com 

@@ -479,6 +479,9 @@ function renderHoldings() {
   const sorted = Object.entries(portfolioData.holdings).sort((a, b) => b[1].marketValue - a[1].marketValue);
   for (const [tk, d] of sorted) {
     const pc = d.unrealizedPnl >= 0 ? 'var(--g)' : 'var(--r)';
+    const dc = d.dailyChangePct >= 0 ? 'var(--g)' : 'var(--r)';
+    const dcBg = d.dailyChangePct >= 0 ? 'var(--gd)' : 'var(--rd)';
+    const dcSign = d.dailyChangePct >= 0 ? '+' : '';
     h += `<div class="hr">
       <div class="h-tk">${tk}<span class="s-sc">${d.sector || ''}</span></div>
       <div class="h-dt">
@@ -488,6 +491,11 @@ function renderHoldings() {
       <div class="h-vl">
         <div class="h-mk">${fm(d.marketValue)}</div>
         <div class="h-pn" style="color:${pc}">${d.unrealizedPnl >= 0 ? '+' : ''}${fm(d.unrealizedPnl)} (${fp(d.unrealizedPct)})</div>
+      </div>
+      <div style="text-align:right;min-width:80px">
+        <div style="font-size:10px;color:var(--t3);margin-bottom:2px">today</div>
+        <span style="font-size:11px;font-weight:600;padding:2px 6px;border-radius:4px;background:${dcBg};color:${dc}">${dcSign}${d.dailyChangePct.toFixed(2)}%</span>
+        <div style="font-size:10px;color:${dc};margin-top:2px">${dcSign}${fm(d.dailyChange)}</div>
       </div>
       <div class="s-ac" style="min-width:auto;margin-left:8px">
         <button class="bt sl" onclick="sellOne('${tk}')">-1sh</button>
@@ -536,9 +544,9 @@ function initChart() {
       {
         label: 'Portfolio', data: [],
         borderColor: '#00d084', backgroundColor: gradientGreen,
-        fill: true, tension: 0.45, pointRadius: 0, pointHoverRadius: 4,
+        fill: true, tension: 0.5, pointRadius: 0, pointHoverRadius: 5,
         pointHoverBackgroundColor: '#00d084', pointHoverBorderColor: '#fff',
-        pointHoverBorderWidth: 2, borderWidth: 2, cubicInterpolationMode: 'monotone'
+        pointHoverBorderWidth: 2, borderWidth: 1.5, cubicInterpolationMode: 'monotone'
       },
       {
         label: 'Baseline', data: [],
@@ -596,6 +604,17 @@ function setChartRange(r) {
   updateChart();
 }
 
+function formatChartLabel(isoTime, range) {
+  const d = new Date(isoTime);
+  if (range === '1d') return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  if (range === '1w') return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (range === '1mo') return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (range === '3mo') return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (range === '6mo') return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+  if (range === '1y') return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 function updateChart() {
   if (!portfolioData) return;
   const cutoff = Date.now() - (RANGE_MS[chartRange] || RANGE_MS['1mo']);
@@ -603,12 +622,19 @@ function updateChart() {
   const display = filtered.length > 0 ? filtered : chartHistory.slice(-1);
 
   const startVal = portfolioData.startValue || 10000;
-  const now = { time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }), rawTime: new Date().toISOString(), value: portfolioData.totalValue };
-  const points = [...display, now];
+  const nowISO = new Date().toISOString();
+  const nowPoint = { rawTime: nowISO, value: portfolioData.totalValue };
+  const points = [...display, nowPoint];
 
-  mainChart.data.labels = points.map(p => p.time);
-  mainChart.data.datasets[0].data = points.map(p => Math.round(p.value * 100) / 100);
-  mainChart.data.datasets[1].data = points.map(() => startVal);
+  // Downsample for smoothness — max 120 points on screen
+  const maxPts = 120;
+  const sampled = points.length > maxPts
+    ? points.filter((_, i) => i % Math.ceil(points.length / maxPts) === 0 || i === points.length - 1)
+    : points;
+
+  mainChart.data.labels = sampled.map(p => formatChartLabel(p.rawTime, chartRange));
+  mainChart.data.datasets[0].data = sampled.map(p => Math.round(p.value * 100) / 100);
+  mainChart.data.datasets[1].data = sampled.map(() => startVal);
   const up = portfolioData.totalPnl >= 0;
   mainChart.data.datasets[0].borderColor = up ? '#00d084' : '#ff4757';
   mainChart.data.datasets[0].backgroundColor = up ? mainChart._gradientGreen : mainChart._gradientRed;

@@ -51,20 +51,20 @@ Any stock on yahoo finance website.
 
 ## Quantitve Model Explanation
 
-Composite Scanner — Enter any tickers and it runs all models simultaneously, ranks them by signal strength, and tells you exactly why. Click any result to deep-dive.
+Composite Scanner: Enter any tickers and it runs all models simultaneously, ranks them by signal strength, and tells you exactly why. Click any result to deep-dive.
 
-Mean Reversion — Calculates z-scores against 20-day moving averages, Bollinger Band %B position, RSI overbought/oversold levels, and distance from SMA. Flags stocks that have deviated far from their mean.
+Mean Reversion:  Calculates z-scores against 20-day moving averages, Bollinger Band %B position, RSI overbought/oversold levels, and distance from SMA. Flags stocks that have deviated far from their mean.
 
-Momentum — Analyzes SMA crossovers (golden cross / death cross), MACD histogram and signal line, 5-day and 20-day rate of change, RSI momentum zones, and volume surges confirming trends.
+Momentum: Analyzes SMA crossovers (golden cross / death cross), MACD histogram and signal line, 5-day and 20-day rate of change, RSI momentum zones, and volume surges confirming trends.
 
-ML Pattern Recognition — Builds a feature composite from trend consistency across 6 timeframes, RSI contribution, Bollinger %B mean-reversion component, volume trend analysis, and linear regression to predict 5-day price targets with R² confidence.
+ML Pattern Recognition: Builds a feature composite from trend consistency across 6 timeframes, RSI contribution, Bollinger %B mean-reversion component, volume trend analysis, and linear regression to predict 5-day price targets with R² confidence.
 
-Statistical Arbitrage (Pairs) — Scans 16 pre-built correlated pairs (NVDA/AMD, V/MA, KO/PEP, etc.), computing correlation, price ratio z-scores, spread z-scores, and R² from linear regression. When a pair diverges beyond 2 standard deviations, it flags a long/short trade.
+Statistical Arbitrage (Pairs): Scans 16 pre-built correlated pairs (NVDA/AMD, V/MA, KO/PEP, etc.), computing correlation, price ratio z-scores, spread z-scores, and R² from linear regression. When a pair diverges beyond 2 standard deviations, it flags a long/short trade.
 
-Volatility Analysis — Measures 20-day and 60-day historical vol, vol ratio for regime detection (expanding vs compressing), ATR as % of price, and Bollinger squeeze detection for breakout setups.
+Volatility Analysis: Measures 20-day and 60-day historical vol, vol ratio for regime detection (expanding vs compressing), ATR as % of price, and Bollinger squeeze detection for breakout setups.
 
-Backtester — Tests momentum, mean reversion, and combined strategies on historical data, showing total return, alpha vs buy-and-hold, Sharpe ratio, win rate, max drawdown, and number of trades — with a chart.
+Backtester: Tests momentum, mean reversion, and combined strategies on historical data, showing total return, alpha vs buy-and-hold, Sharpe ratio, win rate, max drawdown, and number of trades — with a chart.
 
-Risk Analysis — Analyzes your live portfolio for position concentration, sector concentration, cash buffer, diversification, and per-holding volatility.
+Risk Analysis: Analyzes your live portfolio for position concentration, sector concentration, cash buffer, diversification, and per-holding volatility.
 
 Notice: This app was used with the help of claude code, email any questions to mustafa.abouelleil@gmail.com 
